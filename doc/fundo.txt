@@ -1,0 +1,15 @@
+*fundo.txt*
+*nvimfundo.txt*
+*nvim-fundo.txt*
+
+type `gf` or `CTRL-W gf` under the PATH value :)
+
+`URL`: https://github.com/kevinhwang91/nvim-fundo
+
+`PATH`: ../README.md
+
+`PATH`: ../lua/fundo/config.lua |nvim-fundo-default-config|
+
+`PATH`: ../lua/fundo.lua |nvim-fundo-api|
+
+vim:ft=help
