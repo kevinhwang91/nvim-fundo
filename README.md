@@ -12,7 +12,7 @@ The goal of nvim-fundo is to make Neovim's undo file become stable and useful.
 
 ### TODO Features
 
-- Limit the count and size for achieves
+- Limit the count and size for archives
 - Restore undo history even if the file has been moved
 - Support useful use cases for undo file
 
@@ -27,15 +27,19 @@ The goal of nvim-fundo is to make Neovim's undo file become stable and useful.
 Install with [Packer.nvim](https://github.com/wbthomason/packer.nvim):
 
 ```lua
-use {'kevinhwang91/nvim-fundo', requires = 'kevinhwang91/promise-async',
-     run = function() require('fundo').install() end}
+use {
+    'kevinhwang91/nvim-fundo', requires = 'kevinhwang91/promise-async',
+     run = function() require('fundo').install() end
+}
 ```
 
 ### Minimal configuration
 
 ```lua
-use {'kevinhwang91/nvim-fundo', requires = 'kevinhwang91/promise-async',
-     run = function() require('fundo').install() end}
+use {
+    'kevinhwang91/nvim-fundo', requires = 'kevinhwang91/promise-async',
+     run = function() require('fundo').install() end
+}
 
 vim.o.undofile = true
 require('fundo').setup()
@@ -49,7 +53,7 @@ Use undo file as usual.
 
 ### How does nvim-undo keep the undo history?
 
-Fundo will keep the latest files as achieves, in other words, it takes additional space in your
+Fundo will keep the latest files as archives, in other words, it takes additional space in your
 disk. If the `BufReadPost` event is fired, it will validate the undo file and restore it if
 necessary.
 
@@ -58,7 +62,7 @@ necessary.
 ```lua
 {
     archives_dir = {
-        description = [[The directory to store the achieves]],
+        description = [[The directory to store the archives]],
         default = vim.fn.stdpath('cache') .. path.separator .. 'fundo'
     }
 }
@@ -69,6 +73,10 @@ necessary.
 ### API
 
 [fundo.lua](./lua/fundo.lua)
+
+## Run tests
+
+`make test`
 
 ## Feedback
 
