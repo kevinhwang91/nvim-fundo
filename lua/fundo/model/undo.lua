@@ -9,8 +9,8 @@ local fs = require('fundo.fs')
 local utils = require('fundo.utils')
 
 ---@class FundoUndo
----@field private dir string
 ---@field private nothingMsg string
+---@field dir string
 ---@field bufnr number
 ---@field attached boolean
 local Undo = {
@@ -22,10 +22,16 @@ function Undo:new(bufnr, dir)
     self.__index = self
     o.bufnr = bufnr
     o.dir = dir
-    local bt = vim.bo[bufnr].bt
-    o.attached = (bt == '' or bt == 'acwrite') and vim.bo[bufnr].undofile
-    o:reset()
     return o
+end
+
+function Undo:attach()
+    local bt = vim.bo[self.bufnr].bt
+    self.attached = (bt == '' or bt == 'acwrite') and vim.bo[self.bufnr].undofile
+    if self.attached then
+        self:reset()
+    end
+    return self.attached
 end
 
 function Undo:dispose()
@@ -43,9 +49,7 @@ function Undo:reset()
         self.fallbackPath = path.join(self.dir, basename)
     end
     self.name = name
-    self.changedtick = api.nvim_buf_get_changedtick(self.bufnr)
-    self.isDirty = self.undoPath ~= '' and vim.bo[self.bufnr].undofile and
-        vim.bo[self.bufnr].undolevels ~= 0
+    self.isDirty = self.undoPath ~= '' and vim.bo[self.bufnr].undolevels ~= 0
 end
 
 function Undo:isEmpty()

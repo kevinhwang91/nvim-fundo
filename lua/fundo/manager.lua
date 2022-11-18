@@ -9,7 +9,6 @@ local utils      = require('fundo.utils')
 local undo       = require('fundo.model.undo')
 local async      = require('async')
 local config     = require('fundo.config')
-local path       = require('fundo.fs.path')
 local log        = require('fundo.lib.log')
 
 ---@class FundoManager
@@ -20,7 +19,10 @@ local Manager = {}
 
 function Manager:attach(bufnr)
     if not self.undos[bufnr] then
-        self.undos[bufnr] = undo:new(bufnr, self.achieveDir)
+        local u = undo:new(bufnr, self.achieveDir)
+        if u:attach() then
+            self.undos[bufnr] = u
+        end
     end
     return self.undos[bufnr]
 end
@@ -72,7 +74,9 @@ function Manager:initialize()
     end))
     event:on('BufReadPost', function(bufnr)
         local u = self:attach(bufnr)
-        u:check()
+        if u then
+            u:check()
+        end
     end, self.disposables)
     event:on('BufWritePost', function(bufnr)
         local u = self.undos[bufnr]
