@@ -4,7 +4,7 @@
 	"completion.displayContext": 50,
 	"completion.keywordSnippet": "Disable",
 	"completion.postfix": ".",
-    "diagnostics.libraryFiles": "Disable",
+	"diagnostics.libraryFiles": "Disable",
 	"diagnostics.disable": [
 		"different-requires",
 		"param-type-mismatch",
@@ -23,8 +23,11 @@
 	"runtime.version": "LuaJIT",
 	"type.castNumberToInteger": true,
 	"type.weakUnionCheck": true,
+    "workspace.checkThirdParty": false,
 	"workspace.library": [
 		"$VIM/site/pack/packer/start/emmylua-nvim",
-		"$VIM/site/pack/packer/start/promise-async/typings"
+		"$VIM/site/pack/packer/start/promise-async/typings",
+		"${3rd}/luassert/library",
+		"${3rd}/busted/library"
 	]
 }

@@ -17,7 +17,7 @@ HEREROCKS_ACTIVE := source $(TARGET_DIR)/bin/activate
 LUAROCKS ?= $(TARGET_DIR)/bin/luarocks
 
 BUSTED ?= $(TARGET_DIR)/bin/busted
-BUSTED_HELPER ?= $(PWD)/spec/fixtures.lua
+BUSTED_HELPER ?= $(PWD)/spec/helper/fixtures.lua
 
 PROMISE_ASYNC ?= $(TARGET_DIR)/share/lua/5.1/promise-async
 
