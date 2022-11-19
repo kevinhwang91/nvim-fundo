@@ -1,9 +1,7 @@
-local busted = require('busted')
-
 local _done
-local co = _G.co
+local defaultTimeout = 1000
 
-busted.subscribe({'test', 'start'}, function()
+require('busted').subscribe({'test', 'start'}, function()
     _done = false
 end)
 
@@ -11,40 +9,21 @@ local function getDone()
     return _done
 end
 
+---@return boolean
 function _G.done()
     _done = true
     return _done
 end
 
----------------------------------------------------------------------
----Need to implement _G.wait to pass tests
-
-local defaultTimeout = 1000
-
----Should override this function to customize EventLoop to pass tests
 ---@param ms? number
 ---@return boolean
 function _G.wait(ms)
+    print(getDone())
     if getDone() then
         return true
     end
-    local interval = 5
-    local timer = require('luv').new_timer()
-    local cnt = 0
+    local interval = 20
     ms = ms or defaultTimeout
-    timer:start(interval, interval, function()
-        cnt = cnt + interval
-        local d = getDone()
-        if cnt >= ms or d then
-            timer:stop()
-            timer:close()
-            local thread = coroutine.running()
-            if thread ~= co then
-                require('spec.helpers.init').setTimeout(function()
-                    coroutine.resume(co, d)
-                end, 0)
-            end
-        end
-    end)
-    return coroutine.yield()
+    local ret = vim.wait(ms, getDone, interval, false)
+    return ret
 end

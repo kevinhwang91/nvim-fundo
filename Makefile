@@ -29,7 +29,7 @@ all: deps
 deps: | $(HEREROCKS) $(BUSTED)
 
 test: $(BUSTED) $(PROMISE_ASYNC)
-	@echo -n Testing ......
+	@echo Testing ......
 	@$(HEREROCKS_ACTIVE) && eval $$(luarocks path) && \
 		$(NVIM_BIN) --clean -n --headless -u spec/init.lua -- \
 		--helper=$(BUSTED_HELPER) $(BUSTED_ARGS)

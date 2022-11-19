@@ -1,6 +1,10 @@
+---Respect to NodeJS path module
 ---@class FundoFsPath
 local Path = {}
-local uv = vim.loop
+
+local utils = require('fundo.utils')
+local isWindows
+local unixSep, windowSep
 
 local function normalizeStr(res, str)
     if str == '..' then
@@ -17,8 +21,12 @@ end
 
 ---
 ---@param p string
-function Path.basename(p)
+---@param suffix? string An optional suffix to remove
+function Path.basename(p, suffix)
     assert(type(p) == 'string', 'expected string')
+    if suffix then
+        assert(type(suffix) == 'string', 'expected string')
+    end
     local i = 1
     while i <= #p do
         local s = p:find(Path.sep, i, true)
@@ -27,7 +35,13 @@ function Path.basename(p)
         end
         i = s + 1
     end
-    return p:sub(i)
+    if suffix then
+        local s, e = p:find(suffix, i, true)
+        p = (s and s > i and e == #p) and p:sub(i, s - 1) or p:sub(i)
+    else
+        p = p:sub(i)
+    end
+    return p
 end
 
 ---
@@ -41,18 +55,33 @@ function Path.normalize(p)
     local res = {}
     local i = 1
     local li = 0
+    local firstIsSep = false
     while i <= #p do
         local s = p:find(Path.sep, i, true)
         if not s then
             break
         end
-        local lastSect = p:sub(li, s - 1)
-        normalizeStr(res, lastSect)
+        if s == 1 then
+            firstIsSep = true
+        else
+            normalizeStr(res, p:sub(li, s - 1))
+        end
         i = s + 1
         li = i
     end
+    local lastIsSep = i > #p
     normalizeStr(res, p:sub(li))
-    return #res == 0 and '.' or table.concat(res, Path.sep)
+    if #res == 0 then
+        return '.'
+    end
+    p = table.concat(res, Path.sep)
+    if firstIsSep then
+        p = Path.sep .. p
+    end
+    if lastIsSep then
+        p = p .. Path.sep
+    end
+    return p
 end
 
 ---
@@ -69,7 +98,9 @@ function Path.join(...)
 end
 
 local function init()
-    Path.sep = uv.os_uname().sysname == 'Windows_NT' and [[\]] or '/'
+    unixSep, windowSep = '/', [[\]]
+    isWindows = utils.isWindows()
+    Path.sep = isWindows and windowSep or unixSep
 end
 
 init()

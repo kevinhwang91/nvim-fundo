@@ -1,5 +1,4 @@
 ---@class FundoFsUvAsync
----@field close fun(string): string
 local UVAsync = {}
 
 local uv = vim.loop
