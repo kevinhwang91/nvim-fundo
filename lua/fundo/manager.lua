@@ -95,11 +95,11 @@ function Manager:syncAll(block)
             vim.wait(1000, function()
                 return res
             end, 30, false)
-            log.debug(('has elaspsed %dms'):format(uv.hrtime() - now) / 1e6)
+            log.debug(('has elaspsed %dms'):format((uv.hrtime() - now) / 1e6))
         end
         local results = await(p)
         log.debug('results:', results)
-        -- 60 * 60 * 1e9 s = 1 hour
+        -- 60 * 60 * 1e9 ns = 1 hour
         log.debug(now - self.lastScannedtime)
         if not block and now - self.lastScannedtime > 60 * 60 * 1e9 then
             self.lastScannedtime = now
