@@ -350,12 +350,14 @@ function UVWrapper.copyfile(path, newPath, flags) end
 function UVWrapper.copyfileSync(path, newPath, flags) end
 
 ---@param path string
+---@param entries number
 ---@return Promise
-function UVWrapper.opendir(path) end
+function UVWrapper.opendir(path, entries) end
 
 ---@param path string
+---@param entries number
 ---@return userdata
-function UVWrapper.opendirSync(path) end
+function UVWrapper.opendirSync(path, entries) end
 
 ---@param dir userdata
 ---@return Promise
@@ -419,7 +421,7 @@ assign4('copyfile')
 ---@diagnostic disable-next-line: duplicate-set-field
 UVWrapper.opendir = function(path, entries)
     return promise(function(resolve, reject)
-        uv.opendir(path, function(err, data)
+        uv.fs_opendir(path, function(err, data)
             if err then
                 reject(err)
             else

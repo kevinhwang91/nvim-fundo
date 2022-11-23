@@ -9,17 +9,20 @@ local utils      = require('fundo.utils')
 local undo       = require('fundo.model.undo')
 local async      = require('async')
 local config     = require('fundo.config')
+local fs         = require('fundo.fs')
 local log        = require('fundo.lib.log')
+local path       = require('fundo.fs.path')
 
 ---@class FundoManager
 ---@field initialized boolean
 ---@field undos table<number, FundoUndo>
+---@field lastScannedtime number
 ---@field disposables FundoDisposable[]
 local Manager = {}
 
 function Manager:attach(bufnr)
     if not self.undos[bufnr] then
-        local u = undo:new(bufnr, self.achieveDir)
+        local u = undo:new(bufnr, self.archivesDir)
         if u:attach() then
             self.undos[bufnr] = u
         end
@@ -27,7 +30,51 @@ function Manager:attach(bufnr)
     return self.undos[bufnr]
 end
 
+function Manager:listFileStats(dir, bufferSize)
+    return async(function()
+        local tasks = {}
+        await(fs.openDirStream(dir, bufferSize, function(entries)
+            if not entries then
+                return
+            end
+            for _, entry in ipairs(entries) do
+                if entry.type == 'file' then
+                    local name = entry.name
+                    tasks[name] = fs.stat(path.join(dir, name))
+                end
+            end
+        end))
+        return promise.all(tasks)
+    end)
+end
+
+function Manager:scanArchivesDir()
+    return async(function()
+        local statTbl = await(self:listFileStats(self.archivesDir, 1024))
+        local stats = {}
+        for name, stat in pairs(statTbl) do
+            table.insert(stats, {name = name, mtime = stat.mtime.sec, size = stat.size})
+        end
+        table.sort(stats, function(a, b)
+            return a.mtime > b.mtime
+        end)
+        local size = 0
+        local limit = self.limitArchivesSize * 1024 * 1024
+        local tasks = {}
+        for _, stat in ipairs(stats) do
+            if size > limit then
+                local p = path.join(self.archivesDir, stat.name)
+                log.debug(p, 'will be removed.')
+                table.insert(tasks, fs.unlink(p))
+            end
+            size = size + stat.size
+        end
+        return promise.all(tasks)
+    end)
+end
+
 function Manager:syncAll(block)
+    -- TODO need mutex
     return async(function()
         local tasks = {}
         for bufnr, u in pairs(self.undos) do
@@ -43,15 +90,21 @@ function Manager:syncAll(block)
             res = true
             return value
         end)
+        local now = uv.hrtime()
         if block then
-            local now = uv.hrtime()
             vim.wait(1000, function()
                 return res
             end, 30, false)
-            log.debug('has elaspsed %dms', (uv.hrtime() - now) / 1e6)
+            log.debug(('has elaspsed %dms'):format(uv.hrtime() - now) / 1e6)
         end
-        local stats = await(p)
-        log.debug('stats:', stats)
+        local results = await(p)
+        log.debug('results:', results)
+        -- 60 * 60 * 1e9 s = 1 hour
+        log.debug(now - self.lastScannedtime)
+        if not block and now - self.lastScannedtime > 60 * 60 * 1e9 then
+            self.lastScannedtime = now
+            await(self:scanArchivesDir())
+        end
         res = true
     end)
 end
@@ -61,9 +114,11 @@ function Manager:initialize()
         return self
     end
     self.initialized = true
-    self.achieveDir = config.archives_dir
-    fn.mkdir(self.achieveDir, 'p')
+    self.archivesDir = config.archives_dir
+    self.limitArchivesSize = config.limit_archives_size
+    fs.mkdirSync(self.archivesDir, 0)
     self.undos = {}
+    self.lastScannedtime = 0
     self.disposables = {}
     table.insert(self.disposables, disposable:create(function()
         for _, b in pairs(self.undos) do
@@ -71,17 +126,19 @@ function Manager:initialize()
         end
         self.initialized = false
         self.undos = {}
+        self.lastScannedtime = 0
     end))
     event:on('BufReadPost', function(bufnr)
         local u = self:attach(bufnr)
         if u then
             u:check()
+
         end
     end, self.disposables)
     event:on('BufWritePost', function(bufnr)
         local u = self.undos[bufnr]
         if u then
-            u:reset()
+            u:reset(true)
         end
     end, self.disposables)
     event:on('BufWipeout', function(bufnr)
@@ -105,19 +162,6 @@ function Manager:initialize()
     event:on('VimSuspend', function() self:syncAll(true) end)
     event:on('TermEnter', function() self:syncAll() end)
     event:on('FocusLost', function() self:syncAll() end)
-
-    for _, bufnr in ipairs(api.nvim_list_bufs()) do
-        if utils.isBufLoaded(bufnr) then
-            self:attach(bufnr)
-        else
-            -- the first buffer is unloaded while firing `BufEnter`
-            promise.resolve():thenCall(function()
-                if utils.isBufLoaded(bufnr) then
-                    self:attach(bufnr)
-                end
-            end)
-        end
-    end
     return self
 end
 

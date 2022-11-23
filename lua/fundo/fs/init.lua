@@ -16,4 +16,27 @@ function FS.copyFile(path, newPath)
     end)
 end
 
+---@param path string
+---@param bufferSize? number
+---@param iterAction fun(entries: table): boolean?
+---@return Promise
+function FS.openDirStream(path, bufferSize, iterAction)
+
+    return async(function()
+        bufferSize = bufferSize or 32
+        local dir = await(uvw.opendir(path, bufferSize))
+        local entries
+        local ok, res = pcall(function()
+            repeat
+                entries = await(uvw.readdir(dir))
+                if await(iterAction(entries)) then
+                    break
+                end
+            until not entries
+        end)
+        await(uvw.closedir(dir))
+        assert(ok, res)
+    end)
+end
+
 return FS

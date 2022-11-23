@@ -76,7 +76,7 @@ local function init()
     fn.mkdir(logDir, 'p')
     levelMap = {TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4}
     defaultLevel = 3
-    Log.setLevel(vim.env.fundo_LOG)
+    Log.setLevel(vim.env.FUNDO_LOG)
 
     for l in pairs(levelMap) do
         Log[l:lower()] = function(...)

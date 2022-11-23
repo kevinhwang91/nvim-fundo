@@ -9,10 +9,10 @@ The goal of nvim-fundo is to make Neovim's undo file become stable and useful.
 ## Features
 
 - Restore undo history even if the file's content has been changed outside Neovim
+- Limit size for archives
 
 ### TODO Features
 
-- Limit the count and size for archives
 - Restore undo history even if the file has been moved
 - Support useful use cases for undo file
 
@@ -64,6 +64,11 @@ necessary.
     archives_dir = {
         description = [[The directory to store the archives]],
         default = vim.fn.stdpath('cache') .. path.separator .. 'fundo'
+    },
+    limit_archives_size = {
+        description = [[Limit the archives directory size, unit is MB(megabyte), elder files will be
+        removed based on their modified time]],
+        default = 512
     }
 }
 ```

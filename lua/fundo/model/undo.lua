@@ -1,7 +1,6 @@
 local api = vim.api
 local fn = vim.fn
 local cmd = vim.cmd
-local uv = vim.loop
 
 local async = require('async')
 local path = require('fundo.fs.path')
@@ -38,7 +37,9 @@ function Undo:dispose()
     self.attached = false
 end
 
-function Undo:reset()
+---
+---@param dirty? boolean
+function Undo:reset(dirty)
     if not self.attached then
         return
     end
@@ -49,7 +50,7 @@ function Undo:reset()
         self.fallbackPath = path.join(self.dir, basename)
     end
     self.name = name
-    self.isDirty = self.undoPath ~= '' and vim.bo[self.bufnr].undolevels ~= 0
+    self.isDirty = dirty and self.undoPath ~= '' and vim.bo[self.bufnr].undolevels ~= 0
 end
 
 function Undo:isEmpty()
@@ -97,7 +98,7 @@ function Undo:loadFallBack()
     if not self.isDirty then
         return
     end
-    if not uv.fs_stat(self.fallbackPath) then
+    if not fs.statSync(self.fallbackPath) then
         return
     end
     local preferredWinid, winids = utils.getWinByBuf(self.bufnr)
