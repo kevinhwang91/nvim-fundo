@@ -95,9 +95,6 @@ function Undo:loadFileAndUndo(winid)
 end
 
 function Undo:loadFallBack()
-    if not self.isDirty then
-        return
-    end
     if not fs.statSync(self.fallbackPath) then
         return
     end

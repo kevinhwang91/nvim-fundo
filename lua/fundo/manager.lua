@@ -132,7 +132,6 @@ function Manager:initialize()
         local u = self:attach(bufnr)
         if u then
             u:check()
-
         end
     end, self.disposables)
     event:on('BufWritePost', function(bufnr)
