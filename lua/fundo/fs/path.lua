@@ -44,6 +44,23 @@ function Path.basename(p, suffix)
     return p
 end
 
+---@param p string
+function Path.dirname(p)
+    assert(type(p) == 'string', 'expected string')
+    if p == Path.sep then
+        return Path.sep
+    end
+    local ls = 1
+    while ls <= #p do
+        local s = p:find(Path.sep, ls + 1, true)
+        if not s then
+            break
+        end
+        ls = s
+    end
+    return ls > 1 and p:sub(1, ls - 1) or '.'
+end
+
 ---
 ---@param p string
 ---@return string

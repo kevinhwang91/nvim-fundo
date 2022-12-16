@@ -26,6 +26,10 @@ end
 
 function Undo:attach()
     local bt = vim.bo[self.bufnr].bt
+    local name = api.nvim_buf_get_name(self.bufnr)
+    if path.dirname(name) == self.dir then
+        vim.bo[self.bufnr].undofile = false
+    end
     self.attached = (bt == '' or bt == 'acwrite') and vim.bo[self.bufnr].undofile
     if self.attached then
         self:reset()
@@ -39,11 +43,12 @@ end
 
 ---
 ---@param dirty? boolean
-function Undo:reset(dirty)
+---@param bufName? string
+function Undo:reset(dirty, bufName)
     if not self.attached then
         return
     end
-    local name = api.nvim_buf_get_name(self.bufnr)
+    local name = bufName or api.nvim_buf_get_name(self.bufnr)
     if name ~= self.name then
         self.undoPath = fn.undofile(name)
         local basename = path.basename(self.undoPath)
@@ -119,8 +124,8 @@ function Undo:transfer()
         if not self:shouldTransfer() then
             return
         end
-        local state = await(fs.stat(self.undoPath))
-        if state then
+        local stat = await(fs.stat(self.undoPath))
+        if stat then
             await(fs.copyFile(self.name, self.fallbackPath))
         end
         self.isDirty = false
