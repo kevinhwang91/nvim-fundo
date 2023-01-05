@@ -1,16 +1,15 @@
-local async = require('async')
+local promise = require('promise')
 
 local M = {}
 
-local function wrapper(assertTrue, status, ...)
-    assertTrue(status)
-    return ...
-end
-function M.asyncWrapper(f )
-    return async(function ()
-        return await(f)
+M.setTimeout = promise.loop.setTimeout
+
+function M.delay(ms)
+    return promise(function(resolve)
+        M.setTimeout(function()
+            resolve()
+        end, ms)
     end)
-    -- return wrapper(pcall(f))
 end
 
 return M

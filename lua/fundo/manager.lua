@@ -1,4 +1,3 @@
-local api = vim.api
 local fn = vim.fn
 local uv = vim.loop
 
@@ -12,11 +11,13 @@ local config     = require('fundo.config')
 local fs         = require('fundo.fs')
 local log        = require('fundo.lib.log')
 local path       = require('fundo.fs.path')
+local mutex      = require('fundo.lib.mutex')
 
 ---@class FundoManager
 ---@field initialized boolean
 ---@field undos table<number, FundoUndo>
 ---@field lastScannedtime number
+---@field mutex FundoMutex
 ---@field disposables FundoDisposable[]
 local Manager = {}
 
@@ -74,38 +75,38 @@ function Manager:scanArchivesDir()
 end
 
 function Manager:syncAll(block)
-    -- TODO need mutex
-    return async(function()
-        local tasks = {}
-        for bufnr, u in pairs(self.undos) do
-            if u:shouldTransfer() then
-                tasks[bufnr] = u:transfer()
+    return self.mutex:use(function()
+        return async(function()
+            local tasks = {}
+            for bufnr, u in pairs(self.undos) do
+                if u:shouldTransfer() then
+                    tasks[bufnr] = u:transfer()
+                end
             end
-        end
-        if vim.tbl_isempty(tasks) then
-            return
-        end
-        local res = false
-        local p = promise.allSettled(tasks):thenCall(function(value)
+            if vim.tbl_isempty(tasks) then
+                return
+            end
+            local res = false
+            local p = promise.allSettled(tasks):thenCall(function(value)
+                res = true
+                return value
+            end)
+            local now = uv.hrtime()
+            if block then
+                vim.wait(1000, function()
+                    return res
+                end, 30, false)
+                log.debug(('has elaspsed %dms'):format((uv.hrtime() - now) / 1e6))
+            end
+            local results = await(p)
+            log.debug('results:', results)
+            -- 60 * 60 * 1e9 ns = 1 hour
+            if not block and now - self.lastScannedtime > 60 * 60 * 1e9 then
+                self.lastScannedtime = now
+                await(self:scanArchivesDir())
+            end
             res = true
-            return value
         end)
-        local now = uv.hrtime()
-        if block then
-            vim.wait(1000, function()
-                return res
-            end, 30, false)
-            log.debug(('has elaspsed %dms'):format((uv.hrtime() - now) / 1e6))
-        end
-        local results = await(p)
-        log.debug('results:', results)
-        -- 60 * 60 * 1e9 ns = 1 hour
-        log.debug(now - self.lastScannedtime)
-        if not block and now - self.lastScannedtime > 60 * 60 * 1e9 then
-            self.lastScannedtime = now
-            await(self:scanArchivesDir())
-        end
-        res = true
     end)
 end
 
@@ -114,11 +115,12 @@ function Manager:initialize()
         return self
     end
     self.initialized = true
-    self.archivesDir = config.archives_dir
+    self.archivesDir = path.normalize(config.archives_dir)
     self.limitArchivesSize = config.limit_archives_size
     fs.mkdirSync(self.archivesDir, 0)
     self.undos = {}
     self.lastScannedtime = 0
+    self.mutex = mutex:new()
     self.disposables = {}
     table.insert(self.disposables, disposable:create(function()
         for _, b in pairs(self.undos) do

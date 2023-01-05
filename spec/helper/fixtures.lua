@@ -1,8 +1,14 @@
 local _done
 local defaultTimeout = 1000
 local promise = require('promise')
-require('busted').subscribe({'test', 'start'}, function()
+local busted = require('busted')
+busted.subscribe({'suite', 'start'}, function()
+    vim.env.TMPDIR = vim.env.TMPDIR or '/tmp/fundo'
+end)
+busted.subscribe({'test', 'start'}, function()
     _done = false
+end)
+busted.subscribe({'suite', 'end'}, function()
 end)
 
 local function getDone()
@@ -25,6 +31,7 @@ function _G.wait(ms)
     local interval = 20
     ms = ms or defaultTimeout
     local callWrapper = promise.loop.callWrapper
+    ---@diagnostic disable-next-line: duplicate-set-field
     promise.loop.callWrapper = function(callback)
         ok, res = pcall(callback)
         if not ok then
