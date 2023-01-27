@@ -84,7 +84,7 @@ function Undo:loadFileAndUndo(winid)
         local lines = api.nvim_buf_get_lines(self.bufnr, 0, -1, false)
         utils.bufCall(self.bufnr, function()
             cmd(([[
-                sil %dread %s
+                keepalt sil %dread %s
                 sil 1,%ddelete_
             ]]):format(#lines, fn.fnameescape(self.fallbackPath), #lines))
         end)
