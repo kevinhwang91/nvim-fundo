@@ -85,7 +85,7 @@ function Undo:loadFileAndUndo(winid)
         utils.bufCall(self.bufnr, function()
             cmd(([[
                 keepalt sil %dread %s
-                sil 1,%ddelete_
+                keepj sil 1,%ddelete_
             ]]):format(#lines, fn.fnameescape(self.fallbackPath), #lines))
         end)
         self:loadUndo()
@@ -137,6 +137,7 @@ function Undo:check()
         return
     end
     if self:isEmpty() then
+        info('loadUndo')
         self:loadFallBack()
     end
 end
