@@ -137,7 +137,6 @@ function Undo:check()
         return
     end
     if self:isEmpty() then
-        info('loadUndo')
         self:loadFallBack()
     end
 end
