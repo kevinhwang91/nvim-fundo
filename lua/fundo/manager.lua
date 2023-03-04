@@ -117,7 +117,8 @@ function Manager:initialize()
     self.initialized = true
     self.archivesDir = path.normalize(config.archives_dir)
     self.limitArchivesSize = config.limit_archives_size
-    fs.mkdirSync(self.archivesDir, 0)
+    -- convert 0o755 to decimal base
+    fs.mkdirSync(self.archivesDir, 493)
     self.undos = {}
     self.lastScannedtime = 0
     self.mutex = mutex:new()
