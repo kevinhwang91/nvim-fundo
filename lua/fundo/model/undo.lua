@@ -8,13 +8,10 @@ local fs = require('fundo.fs')
 local utils = require('fundo.utils')
 
 ---@class FundoUndo
----@field private nothingMsg string
 ---@field dir string
 ---@field bufnr number
 ---@field attached boolean
-local Undo = {
-    nothingMsg = 'Nothing to undo'
-}
+local Undo = {}
 
 function Undo:new(bufnr, dir)
     local o = setmetatable({}, self)
@@ -62,7 +59,7 @@ function Undo:isEmpty()
     local res = utils.bufCall(self.bufnr, function()
         return api.nvim_exec('undolist', true)
     end)
-    return res:sub(1, #self.nothingMsg) == self.nothingMsg
+    return not res:match('^number')
 end
 
 function Undo:loadUndo()
