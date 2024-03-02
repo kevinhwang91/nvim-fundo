@@ -1,17 +1,17 @@
 local fn = vim.fn
 local uv = vim.loop
 
-local event      = require('fundo.lib.event')
+local event = require('fundo.lib.event')
 local disposable = require('fundo.lib.disposable')
-local promise    = require('promise')
-local utils      = require('fundo.utils')
-local undo       = require('fundo.model.undo')
-local async      = require('async')
-local config     = require('fundo.config')
-local fs         = require('fundo.fs')
-local log        = require('fundo.lib.log')
-local path       = require('fundo.fs.path')
-local mutex      = require('fundo.lib.mutex')
+local promise = require('promise')
+local utils = require('fundo.utils')
+local undo = require('fundo.model.undo')
+local async = require('async')
+local config = require('fundo.config')
+local fs = require('fundo.fs')
+local log = require('fundo.lib.log')
+local path = require('fundo.fs.path')
+local mutex = require('fundo.lib.mutex')
 
 ---@class FundoManager
 ---@field initialized boolean
@@ -159,11 +159,11 @@ function Manager:initialize()
                 self:syncAll()
             end
         end)
-    end)
-    event:on('VimLeave', function() self:syncAll(true) end)
-    event:on('VimSuspend', function() self:syncAll(true) end)
-    event:on('TermEnter', function() self:syncAll() end)
-    event:on('FocusLost', function() self:syncAll() end)
+    end, self.disposables)
+    event:on('VimLeave', function() self:syncAll(true) end, self.disposables)
+    event:on('VimSuspend', function() self:syncAll(true) end, self.disposables)
+    event:on('TermEnter', function() self:syncAll() end, self.disposables)
+    event:on('FocusLost', function() self:syncAll() end, self.disposables)
     return self
 end
 
