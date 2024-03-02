@@ -130,7 +130,7 @@ function Undo:transfer()
 end
 
 function Undo:check()
-    if not self.attached then
+    if not self.attached or self.undoPath == '' then
         return
     end
     if self:isEmpty() then
