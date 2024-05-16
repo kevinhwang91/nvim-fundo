@@ -51,6 +51,7 @@ end
 
 function Manager:scanArchivesDir()
     return async(function()
+        log.debug('scanning archives dir')
         local statTbl = await(self:listFileStats(self.archivesDir, 1024))
         local stats = {}
         for name, stat in pairs(statTbl) do
@@ -120,7 +121,7 @@ function Manager:initialize()
     -- convert 0o755 to decimal base
     fs.mkdirSync(self.archivesDir, 493)
     self.undos = {}
-    self.lastScannedtime = 0
+    self.lastScannedtime = uv.hrtime()
     self.mutex = mutex:new()
     self.disposables = {}
     table.insert(self.disposables, disposable:create(function()
